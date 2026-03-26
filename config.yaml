@@ -1,0 +1,49 @@
+# ~/.config/mcphost/config.yaml
+#
+# This file tells mcphost two things:
+#   1. Which LLM to use (your local model)
+#   2. Which MCP servers to connect to (our nmap server)
+#
+# mcphost reads this file automatically when you run `mcphost`
+# Location: ~/.config/mcphost/config.yaml
+# ─────────────────────────────────────────────────────────────
+
+# ── LLM config ───────────────────────────────────────────────
+#
+# mcphost supports several LLM providers.
+# Uncomment the one matching your setup.
+
+# Option A: ollama (recommended — easiest local setup)
+# Make sure you've done: ollama pull qwen2.5:7b
+llm:
+  provider: ollama
+  model: qwen2.5:7b          # or llama3.2, mistral, etc.
+  # base_url: http://localhost:11434   # default, only change if you changed the port
+
+# Option B: llama-server (llama.cpp)
+# llm:
+#   provider: openai-compatible      # llama-server speaks OpenAI API format
+#   model: local                     # model name is ignored by llama-server
+#   base_url: http://localhost:8080
+#   api_key: not-needed              # required field but value doesn't matter
+
+# Option C: Anthropic API (Claude)  — not local but works great
+# llm:
+#   provider: anthropic
+#   model: claude-sonnet-4-6
+#   api_key: sk-ant-...              # or set ANTHROPIC_API_KEY env var
+
+# ── MCP Servers ──────────────────────────────────────────────
+#
+# mcphost will spawn this command as a child process.
+# "command" + "args" together = what gets executed.
+# Make sure the path matches where you put server.js.
+
+mcpServers:
+  nmap:
+    command: node
+    args:
+      - /home/YOU/nmap-mcp/server.js
+    # If you prefer relative path, run mcphost from the nmap-mcp directory:
+    # args:
+    #   - ./server.js
