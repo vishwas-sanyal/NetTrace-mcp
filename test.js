@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const serverPath = join(__dirname, "index.js");
+const serverPath = join(__dirname, "server.js");
 
 // ── Start the MCP server as a child process ───────────────────────────────────
 const server = spawn("node", [serverPath], {

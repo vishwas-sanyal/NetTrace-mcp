@@ -208,3 +208,7 @@ await server.connect(transport);
 
 // This goes to stderr (visible in mcphost logs, not JSON traffic)
 process.stderr.write("[nmap-mcp] server started...\n");
+
+// server.listen({
+//     transport: "stdio",
+// });
