@@ -24,13 +24,13 @@ function sanitiseTarget(raw) {
     return raw.replace(/[^\w.\-/]/g, "").slice(0, 253); // 253 = max domain length
 }
 
-async function runNmap(args, timeoutMs = 60_000) {
+async function runNmap(args) {          //, timeoutMs = 60_000
     const cmd = `nmap ${args.join(" ")}`;
 
     process.stderr.write(`[nmap-mcp] running: ${cmd}\n`);
 
     try {
-        const { stdout, stderr } = await execAsync(cmd, { timeout: timeoutMs });
+        const { stdout, stderr } = await execAsync(cmd);   // , { timeout: timeoutMs }
 
         const output = [stdout, stderr].filter(Boolean).join("\n").trim();
 
@@ -65,9 +65,13 @@ server.tool(
 
     // Description shown to the LLM. Be specific about when to use this.
     "Check which hosts are alive on a network using nmap ping scan (-sn). " +
-    "Use this when the user asks 'what devices are on my network', 'scan for hosts', " +
-    "or 'which IPs are active'. Accepts single IP (192.168.1.1), " +
-    "range (192.168.1.0/24), or hostname.",
+    "IMPORTANT: Pass target as a plain string. Do NOT wrap it in an object." +
+    "IMPORTANT: Arguments must be EXACTLY in this format:\n" +
+    '{ "target": "scanme.nmap.org" }\n' +
+    "DO NOT pass objects. Use for scanning IPs or networks",
+    // "Use this when the user asks 'what devices are on my network', 'scan for hosts', " +
+    // "or 'which IPs are active'. Accepts single IP (192.168.1.1), " +
+    // "range (192.168.1.0/24), or hostname.",
 
     // Parameters: one field called "target", must be a non-empty string.
     // .describe() tells the LLM what value to put here.
@@ -83,13 +87,15 @@ server.tool(
     async ({ target }) => {
         const safe = sanitiseTarget(target);
 
+        console.error("Nmap tool called:", target);
+
         // -sn = ping scan only (no port scan), much faster
         const output = await runNmap(["-sn", safe]);
 
         // We must return { content: [ { type: "text", text: "..." } ] }
         // That's the MCP spec format. The LLM receives this text.
         return {
-            content: [{ type: "text", text: output }],
+            content: [{ type: "text", text: output.slice(0, 1500) }],
         };
     }
 );
