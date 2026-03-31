@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-//
-// test.js  —  manually test the nmap server without mcphost
+// test.js  —  manually test the nmap server
 //
 // This spawns server.js as a subprocess, sends a raw JSON-RPC message,
 // and prints the response. Great for debugging.

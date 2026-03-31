@@ -1,17 +1,3 @@
-// import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-// import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-// import { z } from "zod";
-
-// const NWS_API_BASE = "https://api.weather.gov";
-// const USER_AGENT = "weather-app/1.0";
-
-// // Create server instance
-// const server = new McpServer({
-//     name: "weather",
-//     version: "1.0.0",
-// });
-
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -49,8 +35,6 @@ const server = new McpServer({
     version: "1.0.0",
 });
 
-// ── TOOL 1: ping_scan ─────────────────────────────────────────────────────────
-//
 // server.tool() registers one tool. It takes 4 arguments:
 //   1. Tool name     — what the LLM writes when it wants to call this
 //   2. Description   — what the LLM reads to decide WHEN to call this (very important!)
@@ -59,6 +43,8 @@ const server = new McpServer({
 //
 // The LLM only calls this tool if its description matches the user's intent.
 // Write good descriptions! Think of it as the LLM's instruction manual.
+
+// ── TOOL 1: ping_scan ─────────────────────────────────────────────────────────
 
 server.tool(
     "ping_scan",
@@ -69,9 +55,6 @@ server.tool(
     "IMPORTANT: Arguments must be EXACTLY in this format:\n" +
     '{ "target": "scanme.nmap.org" }\n' +
     "DO NOT pass objects. Use for scanning IPs or networks",
-    // "Use this when the user asks 'what devices are on my network', 'scan for hosts', " +
-    // "or 'which IPs are active'. Accepts single IP (192.168.1.1), " +
-    // "range (192.168.1.0/24), or hostname.",
 
     // Parameters: one field called "target", must be a non-empty string.
     // .describe() tells the LLM what value to put here.
@@ -101,102 +84,103 @@ server.tool(
 );
 
 
-// // ── TOOL 2: quick_scan ────────────────────────────────────────────────────────
+// ── TOOL 2: quick_scan ────────────────────────────────────────────────────────
 
-// server.tool(
-//     "quick_scan",
+server.tool(
+    "quick_scan",
 
-//     "Perform a fast port scan on the most common 1000 ports using nmap (-F flag). " +
-//     "Use when user asks 'scan ports', 'what ports are open', or 'quick scan'. " +
-//     "Returns open ports and their services. Good for a first look at a host.",
+    "Perform a fast port scan on the most common 1000 ports using nmap (-F flag). " +
+    "Use when user asks 'scan ports', 'what ports are open', or 'quick scan'. " +
+    "Returns open ports and their services. Good for a first look at a host.",
 
-//     {
-//         target: z.string().min(1).describe(
-//             "IP address or hostname to scan. Example: 192.168.1.1 or scanme.nmap.org"
-//         ),
-//     },
+    {
+        target: z.string().min(1).describe(
+            "IP address or hostname to scan. Example: 192.168.1.1 or scanme.nmap.org"
+        ),
+    },
 
-//     async ({ target }) => {
-//         const safe = sanitiseTarget(target);
+    async ({ target }) => {
+        const safe = sanitiseTarget(target);
 
-//         // -F = fast mode, scans top 1000 ports instead of all 65535
-//         // -T4 = faster timing (T0=paranoid, T5=insane) — T4 is a good balance
-//         const output = await runNmap(["-F", "-T4", safe], 90_000);
+        // -F = fast mode, scans top 1000 ports instead of all 65535
+        // -T4 = faster timing (T0=paranoid, T5=insane) — T4 is a good balance
+        const output = await runNmap(["-F", "-T4", safe], 90_000);
 
-//         return {
-//             content: [{ type: "text", text: output }],
-//         };
-//     }
-// );
-
-
-// // ── TOOL 3: port_scan ─────────────────────────────────────────────────────────
-
-// server.tool(
-//     "port_scan",
-
-//     "Scan specific port(s) or port ranges on a host, with service version detection. " +
-//     "Use when the user asks about a specific port, like 'is port 22 open', " +
-//     "'scan ports 80 and 443', or 'check ports 1-1024'. " +
-//     "Returns port state, service name, and version.",
-
-//     {
-//         target: z.string().min(1).describe(
-//             "IP address or hostname. Example: 192.168.1.1"
-//         ),
-//         ports: z.string().min(1).describe(
-//             "Port specification. Examples: '22'  |  '80,443'  |  '1-1024'  |  '22,80,443,8080'"
-//         ),
-//     },
-
-//     async ({ target, ports }) => {
-//         const safe = sanitiseTarget(target);
-
-//         // Sanitise ports too — only allow digits, commas, hyphens
-//         const safePorts = ports.replace(/[^\d,\-]/g, "").slice(0, 100);
-
-//         // -sV = version detection (identifies what software is on each port)
-//         // -p  = which ports to scan
-//         const output = await runNmap(["-sV", "-p", safePorts, safe], 120_000);
-
-//         return {
-//             content: [{ type: "text", text: output }],
-//         };
-//     }
-// );
+        return {
+            content: [{ type: "text", text: output }],
+        };
+    }
+);
 
 
-// // ── TOOL 4: os_detect ─────────────────────────────────────────────────────────
-// //
-// // NOTE: OS detection (-O) requires root/sudo on Linux.
-// // The server will still work but nmap will warn you if not root.
+// ── TOOL 3: port_scan ─────────────────────────────────────────────────────────
 
-// server.tool(
-//     "os_detect",
+server.tool(
+    "port_scan",
 
-//     "Attempt to detect the operating system of a host using nmap OS fingerprinting (-O). " +
-//     "Use when the user asks 'what OS is running', 'detect operating system', " +
-//     "or 'what system is at this IP'. Requires sudo/root on Linux for best results.",
+    "Scan specific port(s) or port ranges on a host, with service version detection. " +
+    "Use when the user asks about a specific port, like 'is port 22 open', " +
+    "'scan ports 80 and 443', or 'check ports 1-1024'. " +
+    "Returns port state, service name, and version.",
 
-//     {
-//         target: z.string().min(1).describe(
-//             "IP address or hostname to fingerprint. Example: 192.168.1.1"
-//         ),
-//     },
+    {
+        target: z.string().min(1).describe(
+            "IP address or hostname. Example: 192.168.1.1"
+        ),
+        ports: z.string().min(1).describe(
+            "Port specification. Examples: '22'  |  '80,443'  |  '1-1024'  |  '22,80,443,8080'"
+        ),
+    },
 
-//     async ({ target }) => {
-//         const safe = sanitiseTarget(target);
+    async ({ target, ports }) => {
+        const safe = sanitiseTarget(target);
 
-//         // -O  = OS detection
-//         // -sV = also grab service versions while we're at it
-//         // --osscan-guess = be more aggressive about guessing when nmap isn't sure
-//         const output = await runNmap(["-O", "-sV", "--osscan-guess", safe], 120_000);
+        // Sanitise ports too — only allow digits, commas, hyphens
+        const safePorts = ports.replace(/[^\d,\-]/g, "").slice(0, 100);
 
-//         return {
-//             content: [{ type: "text", text: output }],
-//         };
-//     }
-// );
+        // -sV = version detection (identifies what software is on each port)
+        // -p  = which ports to scan
+        const output = await runNmap(["-sV", "-p", safePorts, safe], 120_000);
+
+        return {
+            content: [{ type: "text", text: output }],
+        };
+    }
+);
+
+
+// ── TOOL 4: os_detect ─────────────────────────────────────────────────────────
+//
+// NOTE: OS detection (-O) requires root/sudo on Linux.
+// In windows TCP/IP fingerprinting (for OS scan) requires Npcap
+// The server will still work but nmap will warn you if not root.
+
+server.tool(
+    "os_detect",
+
+    "Attempt to detect the operating system of a host using nmap OS fingerprinting (-O). " +
+    "Use when the user asks 'what OS is running', 'detect operating system', " +
+    "or 'what system is at this IP'. Requires sudo/root on Linux for best results.",
+
+    {
+        target: z.string().min(1).describe(
+            "IP address or hostname to fingerprint. Example: 192.168.1.1"
+        ),
+    },
+
+    async ({ target }) => {
+        const safe = sanitiseTarget(target);
+
+        // -O  = OS detection
+        // -sV = also grab service versions while we're at it
+        // --osscan-guess = be more aggressive about guessing when nmap isn't sure
+        const output = await runNmap(["-O", "-sV", safe], 120_000);    //"--osscan-guess",
+
+        return {
+            content: [{ type: "text", text: output }],
+        };
+    }
+);
 
 
 // ── CONNECT TRANSPORT AND START ───────────────────────────────────────────────
@@ -212,9 +196,4 @@ server.tool(
 const transport = new StdioServerTransport();
 await server.connect(transport);
 
-// This goes to stderr (visible in mcphost logs, not JSON traffic)
 process.stderr.write("[nmap-mcp] server started...\n");
-
-// server.listen({
-//     transport: "stdio",
-// });
