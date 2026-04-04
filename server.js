@@ -10,6 +10,14 @@ function sanitiseTarget(raw) {
     return raw.replace(/[^\w.\-/]/g, "").slice(0, 253); // 253 = max domain length
 }
 
+function isAllowedTarget(target) {
+    // Allow ONLY local network + safe public test host
+    return (
+        target.startsWith("192.168.") ||
+        target === "scanme.nmap.org"
+    );
+}
+
 async function runNmap(args) {          //, timeoutMs = 60_000
     const cmd = `nmap ${args.join(" ")}`;
 
@@ -70,6 +78,12 @@ server.tool(
     async ({ target }) => {
         const safe = sanitiseTarget(target);
 
+        if (!isAllowedTarget(safe)) {
+            throw new Error(
+                "Target not allowed."
+            );
+        }
+
         console.error("Nmap tool called:", target);
 
         // -sn = ping scan only (no port scan), much faster
@@ -101,6 +115,12 @@ server.tool(
 
     async ({ target }) => {
         const safe = sanitiseTarget(target);
+
+        if (!isAllowedTarget(safe)) {
+            throw new Error(
+                "Target not allowed."
+            );
+        }
 
         // -F = fast mode, scans top 1000 ports instead of all 65535
         // -T4 = faster timing (T0=paranoid, T5=insane) — T4 is a good balance
@@ -134,6 +154,12 @@ server.tool(
 
     async ({ target, ports }) => {
         const safe = sanitiseTarget(target);
+
+        if (!isAllowedTarget(safe)) {
+            throw new Error(
+                "Target not allowed."
+            );
+        }
 
         // Sanitise ports too — only allow digits, commas, hyphens
         const safePorts = ports.replace(/[^\d,\-]/g, "").slice(0, 100);
@@ -171,10 +197,15 @@ server.tool(
     async ({ target }) => {
         const safe = sanitiseTarget(target);
 
+        if (!isAllowedTarget(safe)) {
+            throw new Error(
+                "Target not allowed."
+            );
+        }
+
         // -O  = OS detection
         // -sV = also grab service versions while we're at it
-        // --osscan-guess = be more aggressive about guessing when nmap isn't sure
-        const output = await runNmap(["-O", "-sV", safe], 120_000);    //"--osscan-guess",
+        const output = await runNmap(["-O", "-sV", safe], 120_000);
 
         return {
             content: [{ type: "text", text: output }],
